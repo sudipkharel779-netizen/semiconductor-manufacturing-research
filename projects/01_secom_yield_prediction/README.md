@@ -1,3 +1,44 @@
-what is SECOM? .SECOM data set extracted from wafer fabrication consists of 1567 obs. and 590 (in our case) sensor measurement features plus a pass/fail quality label for each manufacturing run.
-What problem am I investigating? I am investing if we can identify top features thats related to yield outcome and check which is worse whether a false alarm or missing a failure
-What methods am i using? Methods include filter-based feature selection (variance, mutual information, Mann-Whitney), followed by RFECV for wrapper-based selection, XG- Boost for yield classification, and precision-recall AUC as the primary evaluation metric to account for class imbalance.
+# SECOM Yield Prediction — Semiconductor Manufacturing Intelligence
+
+## Research Question
+
+Which process variables in a semiconductor manufacturing line are most
+predictive of yield failure, and how does missing data and class imbalance
+affect predictive model performance?
+
+## Dataset
+
+- Source: UCI Machine Learning Repository (SECOM dataset)
+- Dimensions: 1,567 samples × 590 process measurement features
+- Target: Binary classification (pass/fail at final test)
+- Class balance: ~93.36% pass / ~6.64% fail (104 failures)
+- Missing data: 538 of 590 columns contain missing values;
+  overall 4.54% missing rate; 4 columns exceed 90% missing
+
+## Key Findings (EDA)
+
+- Class imbalance is severe — accuracy is a misleading metric;
+  PR-AUC and recall are the primary evaluation metrics
+- 116 zero variance columns identified — will be dropped before modeling
+- 4 columns (157, 158, 292, 293) exceed 90% missing — drop candidates
+- Feature distributions show heavy overlap between pass and fail —
+  confirms multivariate approach required
+- Features operate on vastly different scales — standardization required
+
+## Methods (planned)
+
+- Missing data handling: comparison of imputation strategies
+- Feature selection: variance thresholding, mutual information,
+  Mann-Whitney, RFECV
+- Classification: Logistic Regression baseline, Random Forest, XGBoost
+- Evaluation: PR-AUC and F2-score (accounts for class imbalance)
+- Interpretability: SHAP feature importance analysis
+
+## Status
+
+- [x] Data acquisition and EDA (July 27, 2026)
+- [ ] Data preprocessing and feature selection
+- [ ] Baseline model development
+- [ ] Advanced modeling and evaluation
+- [ ] SHAP interpretability analysis
+- [ ] Report write-up (IEEE format)
