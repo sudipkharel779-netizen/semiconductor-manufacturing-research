@@ -1,0 +1,3 @@
+what is SECOM? .SECOM data set extracted from wafer fabrication consists of 1567 obs. and 590 (in our case) sensor measurement features plus a pass/fail quality label for each manufacturing run.
+What problem am I investigating? I am investing if we can identify top features thats related to yield outcome and check which is worse whether a false alarm or missing a failure
+What methods am i using? Methods include filter-based feature selection (variance, mutual information, Mann-Whitney), followed by RFECV for wrapper-based selection, XG- Boost for yield classification, and precision-recall AUC as the primary evaluation metric to account for class imbalance.
