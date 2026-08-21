@@ -63,4 +63,4 @@ This repository contains:
 
 Sudip Kharel
 
-LinkedIn: [Add your LinkedIn URL]
+LinkedIn: https://www.linkedin.com/in/sudip-kharel-13929626a/
