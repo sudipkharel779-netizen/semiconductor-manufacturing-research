@@ -19,17 +19,26 @@ affect predictive model performance?
 
 - Class imbalance is severe — accuracy is a misleading metric;
   PR-AUC and recall are the primary evaluation metrics
-- 116 zero variance columns identified — will be dropped before modeling
-- 4 columns (157, 158, 292, 293) exceed 90% missing — drop candidates
+- 116 zero variance columns identified — dropped in preprocessing
+- 4 columns (157, 158, 292, 293) exceed 90% missing — removed at 50% threshold
 - Feature distributions show heavy overlap between pass and fail —
   confirms multivariate approach required
 - Features operate on vastly different scales — standardization required
 
+## Preprocessing Pipeline (completed August 27, 2026)
+
+- Step 1: Removed 116 zero-variance features → 474 remaining
+- Step 2: Removed 28 features exceeding 50% missingness → 446 remaining
+- Step 3: Median imputation applied to remaining missing values (MAR assumption)
+- Step 4: StandardScaler defined — applied within modeling pipeline to prevent leakage
+- Step 5: 80/20 stratified train/test split
+  - Train: 1,253 samples | 83 failures (6.62%)
+  - Test: 314 samples | 21 failures (6.69%)
+- Processed files saved to data/processed/
+
 ## Methods (planned)
 
-- Missing data handling: comparison of imputation strategies
-- Feature selection: variance thresholding, mutual information,
-  Mann-Whitney, RFECV
+- Feature selection: mutual information, Mann-Whitney, RFECV
 - Classification: Logistic Regression baseline, Random Forest, XGBoost
 - Evaluation: PR-AUC and F2-score (accounts for class imbalance)
 - Interpretability: SHAP feature importance analysis
@@ -37,7 +46,7 @@ affect predictive model performance?
 ## Status
 
 - [x] Data acquisition and EDA (July 27, 2026)
-- [ ] Data preprocessing and feature selection
+- [x] Data preprocessing and feature selection (August 27, 2026)
 - [ ] Baseline model development
 - [ ] Advanced modeling and evaluation
 - [ ] SHAP interpretability analysis
