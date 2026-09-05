@@ -34,9 +34,23 @@
               "icon": "lucide-file",
               "title": "Day 5, Date- 09.01.2026"
             }
+          },
+          {
+            "id": "c631572de9de3578",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Day 6, Date- 09.05.2026.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Day 6, Date- 09.05.2026"
+            }
           }
         ],
-        "currentTab": 1
+        "currentTab": 2
       }
     ],
     "direction": "vertical"
@@ -203,10 +217,11 @@
       "bases:Create new base": false
     }
   },
-  "active": "1023d0ee78b67785",
+  "active": "c631572de9de3578",
   "lastOpenFiles": [
-    "Day 4, Date- 08.29.2026.md",
     "Day 5, Date- 09.01.2026.md",
+    "Day 6, Date- 09.05.2026.md",
+    "Day 4, Date- 08.29.2026.md",
     "Day 3, Date- 08.27.2026.md",
     "Day 2, Date- 08.18.2026.md",
     "predictive maintenance and fault detection, Min yen 2025.md",
