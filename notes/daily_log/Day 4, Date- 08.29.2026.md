@@ -1,42 +1,75 @@
-1. Why do we start with logistic regression model but not xg boost?
---> Baseline sets the floor, everything else must beat it.  logistic regression is **interpretable**. Its coefficients directly show which features push toward failure. That interpretability makes it a credible starting point — not just a weak model to beat. Another important point Linear regression predicts continuous values — logistic regression predicts probabilities for binary classification (pass/fail).
+Date: August 27, 2026 | Day: 4
 
-2. A model that predicts pass for every wafer achieves 93.31% accuracy while catching zero failures — accuracy is meaningless for imbalanced problems where missing a failure carries significant manufacturing cost. Same as Naive baseline we used as a baseline for logistics regression.
+## What I completed
+- [x] Created 03_baseline_model.ipynb
+- [x] Loaded processed train/test data from data/processed/
+- [x] Applied StandardScaler fit on training data only (leakage prevention)
+- [x] Established naive baseline (always predict pass)
+- [x] Trained logistic regression with balanced class weights
+- [x] Evaluated using PR-AUC, ROC-AUC, confusion matrix
+- [x] Threshold sweep analysis (0.10 to 0.85)
+- [x] Generated 2 research figures committed to GitHub
+- [x] Written baseline model summary (mini results section)
 
-3. Feature scaling not only prevents large-range features from dominating predictions, but also accelerates gradient descent convergence during logistic regression training.
+## Why logistic regression as baseline
+Baseline sets the floor — everything else must beat it. Logistic 
+regression is interpretable: coefficients directly show which features 
+push toward failure. It predicts probabilities for binary classification 
+(pass/fail), not continuous values like linear regression. This makes 
+it a credible starting point, not just a weak model to beat.
 
-4. class_weight='balanced'` forces the model to **prioritize catching failures** — it penalizes missing a failure much more than raising a false alarm. This means the model will flag more wafers as failures to avoid missing real ones.
- More wafers flagged as failure → catches more real failures → **high recall**
- But also flags some good wafers as failures → more false alarms → **lower precision**
+## Naive baseline finding
+A model that predicts pass for every wafer achieves 93.31% accuracy 
+while catching zero failures. Accuracy is meaningless for imbalanced 
+problems where missing a failure carries significant manufacturing cost. 
+This is the floor — any model that cannot substantially beat this on 
+recall has no practical value.
 
-5. threshold selection becomes important for my SECOM research
-6. 
+## Key technical insights
+- class_weight='balanced' forces the model to prioritize catching 
+  failures by penalizing missed failures more heavily. More wafers 
+  flagged as failure → high recall, but also more false alarms → 
+  lower precision.
+- Feature scaling not only prevents large-range features from dominating 
+  predictions, but also accelerates gradient descent convergence during 
+  logistic regression training (converged in just 83 iterations).
+- Threshold selection is critical for imbalanced problems — default 0.5 
+  is designed for balanced data and is almost certainly wrong here.
 
-6. Logistics Regression caught approximately 4 out of 21 failures. 9% recall means **17 out of 21 failures slipped through as pass. Those 17 wafers continued through all remaining process steps.
-
-7. PR-AUC  (primary):   0.1497
-ROC-AUC (secondary): 0.6208
+## Results
+PR-AUC (primary):   0.1497  
+ROC-AUC (secondary): 0.6208  
 
 Confusion Matrix:
-  True Negatives  (correct pass):   259
-  False Positives (pass → predicted fail): 34
-  False Negatives (fail → predicted pass): 17  ← most costly
-  True Positives  (correct fail):   4
+- True Negatives  (correct pass):        259
+- False Positives (pass → predicted fail): 34
+- False Negatives (fail → predicted pass): 17 ← most costly
+- True Positives  (correct fail):           4
 
 Failures caught: 4 out of 21 (19.0%)
 
-8. PR-AUC is 0.1497 vs random baseline of 0.066 — how much better than random is this?
-- 17 false negatives in a real fab — what is the qualitative cost of each one?
-- Why does ROC-AUC (0.62) look so much better than PR-AUC (0.15) and which one should you trust?
-a lot better than random but still not good in real industry, very poor but like we said this is our base model.17 is a lot among 314 test wafer thats like more than 5% missed failure .not good at all.roc auc here is better than pr auc beacsue lke we predicted before roc auc is optimistic for imbalanced data like we have here.
+## Threshold analysis finding
+The threshold sweep reveals that logistic regression probability 
+estimates are poorly calibrated — failures caught remains flat at 4 
+across thresholds 0.15 to 0.55, indicating the model assigns similar 
+probability scores to both passing and failing wafers. Best recall of 
+28.6% achieved only at threshold 0.10 with 59 false alarms. This 
+confirms a nonlinear model with better class separation is required.
 
-8. this suggest that logistics model is not well enough capable of finding optimal solution with this highly unbalanced secom data. and therfore we need to instead run another model to check whther that will perform beter or not.
-9. "The threshold sweep reveals that logistic regression probability estimates are poorly calibrated for this problem — failures caught remains flat across a wide threshold range, indicating the model assigns similar probability scores to both passing and failing wafers. This confirms that a nonlinear model with better class separation is required."
+Concrete tradeoff: At threshold 0.3 we catch the same 4 failures but 
+generate 8 additional false alarms compared to threshold 0.5 
+(42 vs 34 false alarms).
 
-Mini result section
-## Baseline Model Summary
+## PR-AUC vs ROC-AUC interpretation
+PR-AUC of 0.1497 is 2.3x better than random (0.067) but still very 
+poor in practical terms — catching only 4 of 21 failures tells the 
+real story. ROC-AUC of 0.621 looks more impressive but is optimistic 
+for imbalanced data because it uses the large negative class in the 
+denominator. PR-AUC is the honest metric here.
 
-**Paragraph 1 — What we did:**
+## Baseline model summary (mini results section)
+
+**What we did:**
 A logistic regression classifier with balanced class weights was trained 
 on the preprocessed SECOM dataset (446 features, 1,253 training samples) 
 and evaluated on a held-out test set of 314 samples containing 21 failures. 
@@ -44,7 +77,7 @@ Features were standardized using a scaler fit on training data only to
 prevent data leakage. A naive baseline (always predict pass) was first 
 established, achieving 93.31% accuracy with zero failures caught.
 
-**Paragraph 2 — What we found:**
+**What we found:**
 The logistic regression baseline achieved a PR-AUC of 0.150 compared to 
 a random classifier baseline of 0.067 — approximately 2.3x better than 
 random. At the default 0.5 threshold, the model caught 4 out of 21 failures 
@@ -53,26 +86,31 @@ revealed that failures caught remained flat at 4 across a wide range,
 with maximum recall of 28.6% achieved only at threshold 0.10 — generating 
 59 false alarms. The optimal F1 threshold was 0.55 with F1=0.140.
 
-**Paragraph 3 — What this means:**
+**What this means:**
 The baseline demonstrates that linear decision boundaries are insufficient 
 to meaningfully separate passing and failing wafers in this high-dimensional, 
-severely imbalanced dataset. The flat threshold response confirms that the 
-model assigns similar probability scores to both classes — indicating poor 
-class separation rather than a threshold calibration problem. This motivates 
-the use of ensemble methods such as Random Forest and XGBoost, which can 
-capture nonlinear feature interactions and provide better probability 
-calibration for the minority failure class.
+severely imbalanced dataset. The flat threshold response confirms the model 
+assigns similar probability scores to both classes — indicating poor class 
+separation rather than a threshold calibration problem. This motivates the 
+use of ensemble methods such as Random Forest and XGBoost, which can capture 
+nonlinear feature interactions and provide better probability calibration 
+for the minority failure class.
 
-Answer these without looking at your code:
+## Where logistic regression fails
+- Assumes linear relationships — cannot capture nonlinear sensor interactions
+- High feature-to-sample ratio (446 features, 1,253 samples) makes 
+  coefficient estimation unstable
+- Random Forest and XGBoost address both problems — nonlinear interactions 
+  through tree splitting, high dimensionality through feature subsampling
 
-1. Your model uses `class_weight='balanced'`. Explain in one sentence what this does mathematically. Then explain why it is necessary for SECOM.
-balanced weighting penalizes missing failures more heavily, forcing the model to pay attention to the minority class.
-2. Look at your threshold analysis table. At threshold 0.3, you catch more failures than at threshold 0.5 — but at what cost? Write the tradeoff as a concrete statement: "At threshold 0.3, we catch X additional failures but generate Y additional false alarms."
-at threshold 0.3 and 0.5, both catch 4 failures. From the table: threshold 0.3 has 42 false alarms vs 0.5 has 34 false alarms. So the concrete tradeoff statement is: "At threshold 0.3 we catch the same 4 failures but generate 8 additional false alarms compared to threshold 0.5."
-3. Your PR-AUC is some number. A random classifier on this dataset would achieve a PR-AUC of approximately 0.066 (the base failure rate). How much better than random is your baseline? Is this a meaningful improvement?
-2.3x better than random sounds impressive but catching only 4 of 21 failures tells the real story.
-4. The most important question: where does logistic regression fail on this problem, and what property of a more complex model would address that failure? Think about linearity, feature interactions, and the high-dimensional feature space. Write three sentences.
-- Logistic regression assumes linear relationships — can't capture nonlinear sensor interactions
-- High feature-to-sample ratio makes coefficient estimation unstable
+## Open questions
+1. Will ensemble methods like Random Forest show meaningfully better 
+   class separation on SECOM, or is the signal simply too weak?
+2. At what PR-AUC threshold does a model become practically useful 
+   for a real semiconductor fab — what is the industry standard?
 
-**One thing to add to answer 4:** Random Forest and XGBoost address both problems — they model nonlinear interactions through tree splitting and handle high dimensionality better through feature subsampling.
+## Connection to research identity
+Four days of documented, GitHub-committed research work now exists — 
+EDA, preprocessing pipeline, and baseline modeling — all with written 
+justifications. This is the foundation of the professor outreach 
+portfolio for October.
