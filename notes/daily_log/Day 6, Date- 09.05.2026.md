@@ -121,14 +121,14 @@ margin. Baseline E[f(x)] = 0.5 shifted by balanced class weights,
 not the classification threshold.
 
 ## Waterfall — missed failure (Wafer 37)
-Predicted probability: 0.137 | Actual: FAIL | Prediction: PASS (MISSED)
+==Predicted probability: 0.137 | Actual: FAIL | Prediction: PASS (MISSED)==
 
-Feature 31 highly elevated (1.947 scaled units) but contributes -0.05 
-toward pass — strongest individual feature contribution. Features 59 
-(+0.02) and 103 (+0.01) present but insufficient to overcome Feature 
-31's pass signal. 432 other features pushed -0.26 toward pass.
-Represents a distinct failure mode invisible to the current model — 
-a publishable finding.
+==Feature 31 highly elevated (1.947 scaled units) but contributes -0.05== 
+==toward pass — strongest individual feature contribution. Features 59== 
+==(+0.02) and 103 (+0.01) present but insufficient to overcome Feature== 
+==31's pass signal. 432 other features pushed -0.26 toward pass.==
+==Represents a distinct failure mode invisible to the current model —== 
+==a publishable finding.==
 
 ## SHAP dependence plots
 Feature 103: clear threshold effect at scaled value ~0. Readings below 
