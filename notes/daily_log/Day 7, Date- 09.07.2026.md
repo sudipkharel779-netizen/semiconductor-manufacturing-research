@@ -155,3 +155,5 @@ is a cross-notebook research narrative that professors will recognize
 as genuine analytical thinking.
 
 
+observation in SHAP → mechanistic hypothesis → model selection decision → empirical confirmation. That arc, written up clearly, is the core contribution of your project. It is not just "XGBoost beats RF on SECOM." It is "SHAP interpretability analysis revealed a specific failure mode — competing sensor signals with a masking effect — that motivated the choice of gradient boosting, which subsequently recovered that failure class."
+

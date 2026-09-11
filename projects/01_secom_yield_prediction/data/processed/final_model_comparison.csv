@@ -1,0 +1,5 @@
+Model,Single-Split PR-AUC,CV PR-AUC (mean±std),Single-Split Recall,Failures Caught,Notes
+Naive Baseline,0.0669,0.0664 ± 0.0000,0.000,0 / 21,Always predicts pass
+Logistic Regression,0.1497,0.1773 ± 0.0446,0.19,4 / 21,Linear baseline; balanced weights
+Random Forest,0.2743,0.1956 ± 0.0266,0.619,13 / 21,Best PR-AUC; severe overfitting (gap=0.726)
+XGBoost (200 trees),0.2494,0.2083 ± 0.0260,0.905,19 / 21,Highest recall; 183 false alarms at threshold 0.35

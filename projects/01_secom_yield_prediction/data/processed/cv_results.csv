@@ -1,0 +1,4 @@
+Model,CV PR-AUC (mean),CV PR-AUC (std),CV ROC-AUC (mean),CV ROC-AUC (std),Train PR-AUC (mean),Overfitting Gap
+Logistic Regression,0.1773,0.0446,0.6802,0.0722,0.9629,0.7855
+Random Forest,0.1956,0.0266,0.7623,0.0303,1.0,0.8044
+XGBoost (200 trees),0.2083,0.026,0.735,0.0427,1.0,0.7917
