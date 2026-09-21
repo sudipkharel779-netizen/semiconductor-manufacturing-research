@@ -100,20 +100,7 @@ Result: INCONCLUSIVE. Hypothesis not supported at this sample size.
 Standard deviation decreased (±0.027 → ±0.022) — suggests weak
 stabilizing signal but insufficient to claim meaningful improvement.
 
-Paper discussion paragraph: Adding 538 binary missingness indicators
-produced negligible PR-AUC improvement (+0.0062, within noise),
-rendering the missingness signal hypothesis inconclusive. Missingness
-pattern is highly unlikely to be a strong failure indicator in this
-dataset. This confirms that median imputation does not substantially
-discard failure-relevant information — validating the Day 3
-preprocessing decision. The result matters for manufacturing because
-if missingness were strongly correlated with failure, sensor dropout
-would represent an actionable early warning signal before end-of-line
-test. This hypothesis remains worth testing on larger semiconductor
-datasets with richer failure records. Future work: stacking classifier
-combining RF and XGBoost to reduce false alarms while maintaining
-high recall; investigating Wafers 56 and 241 for undetected failure
-modes; testing missingness hypothesis on larger industry datasets.
+Paper discussion paragraph:  results
 
 ## Checkpoint answers
 
