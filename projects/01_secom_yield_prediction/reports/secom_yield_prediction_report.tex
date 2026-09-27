@@ -253,10 +253,11 @@ regression via \texttt{class\_weight=`balanced'}.
 
 XGBoost is selected as the regularized gradient boosting model 
 \cite{chen2016xgboost}, \cite{dwivedi2024pioneering}, motivated 
-by its sequential error correction mechanism --- each tree 
-explicitly targets misclassified samples from the previous ensemble, 
-addressing wafer-level prediction errors rather than feature-level 
-diversity as in Random Forest. Key regularization parameters include 
+by its sequential error correction mechanism --- each tree is fit to the negative gradient of the loss with 
+respect to current ensemble predictions --- samples with large 
+residuals receive proportionally more correction in subsequent 
+trees, addressing wafer-level prediction errors rather than 
+feature-level diversity as in Random Forest. Key regularization parameters include 
 \texttt{max\_depth=4} (shallow trees preventing memorization), 
 \texttt{learning\_rate=0.05} (conservative per-tree corrections), 
 \texttt{subsample=0.8} and \texttt{colsample\_bytree=0.8} 
@@ -429,9 +430,12 @@ respectively). Random Forest, which averages predictions across
 300 independently trained trees, is unable to correct for this 
 masking effect --- each tree encounters the same suppressing signal 
 and the averaged prediction falls below the detection threshold. 
-XGBoost's sequential boosting mechanism explicitly targets 
-misclassified samples in each subsequent round, enabling recovery 
-of this failure mode \cite{hsu2021multiple}.
+XGBoost's sequential boosting mechanism fits each new tree to 
+the negative gradient of the loss function with respect to current 
+predictions --- this gradient is large for samples where the 
+current ensemble predicts poorly, so subsequent trees implicitly 
+allocate more correction capacity to hard-to-predict samples, 
+enabling recovery of this failure mode. \cite{hsu2021multiple}.
 
 XGBoost's 19-failure recall comes at a cost of 183 false alarms 
 versus Random Forest's 52. The operationally optimal model depends 
