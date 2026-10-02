@@ -1,0 +1,12 @@
+# Raw data — download from UCI ML Repository
+projects/01_secom_yield_prediction/data/raw/
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+
+# OS files
+.DS_Store
+Thumbs.db
