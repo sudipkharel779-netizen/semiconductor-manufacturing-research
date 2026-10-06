@@ -6,10 +6,13 @@
 \usepackage{graphicx}
 \usepackage{textcomp}
 \usepackage{xcolor}
-\usepackage{url}
+\usepackage[hyphens]{url}
+\urlstyle{same}
+\usepackage{float}
+\usepackage[bottom]{footmisc}
+\raggedbottom
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
-
 \begin{document}
 
 \title{Machine Learning for Semiconductor Yield Prediction: A 
@@ -27,29 +30,29 @@ sudipkharel779@gmail.com}
 
 \begin{abstract}
 Semiconductor yield prediction from high-dimensional process data 
-is primarily challenged by severe class imbalance, widespread missing 
-sensor readings, and failure signals distributed across hundreds of 
-process variables rather than concentrated in a small number of 
-dominant signals. While machine learning methods have been applied 
-to this problem, few studies systematically examine the effect of 
-class imbalance handling, compare model performance under 
-cross-validated evaluation, or provide sensor-level explanations 
-that process engineers can act upon. This paper presents a 
-comparative analysis of three machine learning models --- logistic 
-regression, Random Forest, and XGBoost --- for yield prediction on 
-the SECOM semiconductor manufacturing dataset, incorporating SHAP 
-interpretability analysis, a controlled experiment on missingness 
-as a predictive signal, and threshold optimization under asymmetric 
-misclassification costs. Cross-validated PR-AUC results reveal that 
-performance differences between models are within noise bounds given 
-the dataset's 104 failure samples, but XGBoost demonstrates 
-operationally superior recall --- recovering 19 of 21 test failures 
-including a failure mode masked by competing sensor signals that 
-Random Forest could not detect. SHAP analysis identifies that 
-predictive signal is distributed across 237 of 446 features rather 
-than concentrated in a small subset, challenging the applicability 
-of simple feature selection approaches and suggesting that yield 
-failure reflects genuinely multi-causal process interactions.
+is challenged by severe class imbalance, widespread missing sensor 
+readings, and failure signals distributed across hundreds of process 
+variables rather than concentrated in a few dominant signals. While 
+machine learning methods have been applied to this problem, few 
+studies report cross-validated performance under class imbalance or 
+provide sensor-level explanations that process engineers can act 
+upon. This paper presents a comparative analysis of three machine 
+learning models --- logistic regression, Random Forest, and XGBoost 
+--- for yield prediction on the SECOM semiconductor manufacturing 
+dataset, incorporating SHAP interpretability analysis, a controlled 
+experiment on missingness as a predictive signal, and recall-oriented 
+threshold selection motivated by asymmetric misclassification costs. 
+Cross-validated PR-AUC results show that performance differences 
+between models are within noise bounds given the dataset's 104 
+failure samples, but XGBoost achieves substantially higher 
+operational recall --- recovering 19 of 21 test failures, including 
+a failure masked by competing sensor signals that Random Forest 
+missed --- at the cost of a higher false-alarm rate. SHAP analysis 
+shows that 237 of 446 features are required to account for 80\% of 
+total feature importance, indicating that predictive signal is 
+broadly distributed rather than concentrated in a small subset. This 
+challenges simple feature selection approaches and suggests that 
+yield failure reflects multi-causal process interactions.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -69,7 +72,7 @@ significant time, labor, and materials before failure is detected
 at end-of-line test. Early identification of at-risk wafers enables 
 intervention before these costs accumulate, motivating the 
 application of machine learning to yield prediction from in-line 
-process sensor data \cite{shin2000machine}, \cite{huang2023survey}.
+process sensor data \cite{shin2000machine,huang2023survey}.
 
 The SECOM dataset presents the core challenges of real-world yield 
 prediction: 1,567 wafer observations across 590 process measurement 
@@ -90,7 +93,7 @@ count \cite{presciuttini2024advancing}. SHAP interpretability has
 been applied to semiconductor yield prediction generally 
 \cite{wang2024improved}, but rarely to explain specific missed 
 failures or identify masking effects where competing sensor signals 
-suppress failure prediction \cite{lundberg2017unified}. To our 
+suppress failure prediction. To our 
 knowledge, the hypothesis that missingness patterns carry failure 
 signal --- plausible given that sensor dropout may correlate with 
 process anomalies --- has not been systematically tested on the 
@@ -103,27 +106,60 @@ for SECOM yield prediction, providing honest uncertainty
 quantification that reveals single-split results overestimate 
 Random Forest performance by 0.079 PR-AUC.
 
-\item SHAP-based identification of a sensor masking failure mode 
-in which Feature 31 suppresses failure signals from Features 59 
-and 103, with empirical demonstration that gradient boosting 
-recovers this failure class through sequential error correction 
-where Random Forest cannot \cite{lundberg2020local}.
+\item SHAP-based identification of a sensor masking case in which 
+Feature 31 suppresses failure signals from Features 59 and 103, 
+together with evidence that XGBoost recovers this failure where 
+Random Forest does not, consistent with gradient boosting's 
+sequential error correction \cite{lundberg2020local}.
 
 \item A controlled experiment testing whether missingness patterns 
-carry failure signal beyond imputed values, finding no statistically 
-meaningful improvement (+0.0062 PR-AUC), validating the median 
-imputation preprocessing decision and providing evidence against 
-pursuing missingness as a predictive feature on this dataset.
+carry failure signal beyond imputed values, finding no meaningful 
+improvement (+0.0062 PR-AUC), supporting the median imputation 
+preprocessing decision and suggesting limited value in missingness 
+features on this dataset.
 \end{enumerate}
 
 The remainder of this paper is organized as follows. Section~II 
-describes the SECOM dataset and preprocessing decisions. Section~III 
-presents the experimental methodology. Section~IV reports results. 
-Section~V discusses implications for semiconductor process 
-engineering. Section~VI concludes.
+surveys related work on machine learning for semiconductor yield 
+prediction. Section~III describes the SECOM dataset and preprocessing 
+decisions. Section~IV presents the experimental methodology. 
+Section~V reports results. Section~VI discusses implications for 
+semiconductor process engineering. Section~VII concludes.
+
+\section{Related Work}
+
+Machine learning has been applied to semiconductor yield 
+prediction since the early 2000s \cite{shin2000machine}, 
+with methods ranging from k-nearest neighbor fault detection 
+\cite{he2007fault} to deep learning approaches for 
+variable-length sensor data \cite{kim2019fault}. 
+Cascading classification systems \cite{stich2020yield} 
+and ensemble methods \cite{busch2022yield} have demonstrated 
+improvements over single-model baselines, though most studies 
+report single-split accuracy or ROC-AUC metrics that are 
+inadequate under severe class imbalance.
+
+Interpretability methods have gained traction in semiconductor 
+manufacturing. Wang and Chen \cite{wang2024improved} applied 
+XGBoost with SHAP for yield prediction and failure analysis, 
+while Presciuttini et al.\ \cite{presciuttini2024advancing} 
+demonstrated LIME-based interpretability on the SECOM dataset. 
+However, these studies focus on global feature importance 
+rather than explaining specific missed failures or identifying 
+sensor masking effects at the individual wafer level.
+
+Class imbalance handling in manufacturing ML has been addressed 
+through oversampling techniques such as SMOTE \cite{chawla2002smote} 
+and through native class weighting in ensemble methods 
+\cite{boyapati2024enhancing}. Recent surveys 
+\cite{huang2023survey,zhao2026survey} identify class imbalance and 
+missing data as the primary open challenges in semiconductor yield 
+prediction. The present work addresses both challenges 
+simultaneously while contributing per-wafer failure mode 
+analysis and a controlled experiment on missingness as a 
+predictive signal.
 
 \section{Dataset and Preprocessing}
-
 \subsection{Dataset Description}
 
 The SECOM dataset contains 1,567 wafer observations from a 
@@ -131,17 +167,35 @@ semiconductor manufacturing line, each described by 590 anonymized
 process measurement features and a binary outcome label indicating 
 pass or fail at final electrical test \cite{dua2019uci}. Of 1,567 
 wafers, 104 (6.64\%) failed --- establishing a severe class 
-imbalance ratio of approximately 14:1. A naive classifier predicting 
-pass for all wafers achieves 93.36\% accuracy while recovering zero 
-failures, demonstrating that accuracy is a misleading metric for 
-this problem \cite{davis2006relationship}. Additional challenges 
+imbalance ratio of approximately 14:1. Additional challenges 
 include 538 of 590 features containing missing values at an overall 
 rate of 4.54\%, with four features exceeding 90\% missingness, and 
-116 features exhibiting zero variance across all observations. 
-Feature values represent sensor readings from anonymized process 
-steps; no universal threshold exists for acceptable missingness or 
-minimum variance, requiring deliberate, documented preprocessing 
-decisions.
+116 features exhibiting zero variance across all observations 
+(Table~\ref{tab:dataset}). Feature values represent sensor readings 
+from anonymized process steps; no universal threshold exists for 
+acceptable missingness or minimum variance, requiring deliberate, 
+documented preprocessing decisions.
+
+\begin{table}[!htb]
+\caption{SECOM Dataset Statistics}
+\label{tab:dataset}
+\centering
+\footnotesize
+\begin{tabular}{lc}
+\hline
+\textbf{Property} & \textbf{Value} \\
+\hline
+Total wafer observations & 1,567 \\
+Process measurement features & 590 \\
+Failed wafers & 104 (6.64\%) \\
+Passed wafers & 1,463 (93.36\%) \\
+Class imbalance ratio & 14:1 \\
+Features with missing values & 538 (91.2\%) \\
+Overall missing rate & 4.54\% \\
+Zero-variance features & 116 (19.7\%) \\
+\hline
+\end{tabular}
+\end{table}
 
 \subsection{Preprocessing Pipeline}
 
@@ -152,16 +206,15 @@ deliberate research decision with documented justification.
 values across all 1,567 wafers carry no discriminative signal. 
 Exactly 116 such features were identified and removed, reducing 
 the feature space from 590 to 474. Near-zero variance features 
-were retained for subsequent model-based selection.
+were retained.
 
 \textbf{Step 2: High-missingness removal.} Features missing in 
 more than 50\% of samples cannot be reliably imputed without 
 introducing more noise than signal \cite{park2026data}. 
 Twenty-eight features exceeded this threshold and were removed, 
-yielding 446 features. The 50\% threshold is a deliberate research 
-decision --- common thresholds in the literature range from 30\% 
-to 70\%; we selected 50\% as a moderate, defensible choice and 
-note sensitivity to this decision as a limitation.
+yielding 446 features. Common thresholds in the literature range 
+from 30\% to 70\%; we selected 50\% as a moderate choice and 
+examine sensitivity to it in Section~\ref{sec:sensitivity}.
 
 \textbf{Step 3: Median imputation.} Remaining features exhibited 
 a mean missing rate of 1.6\% (maximum 45.6\%). Median imputation 
@@ -169,22 +222,21 @@ was preferred over mean imputation due to the presence of outliers
 from equipment anomalies \cite{riaz2025robust}. KNN imputation and 
 MICE were rejected due to computational cost and unverifiable 
 distributional assumptions respectively. We assume Missing At 
-Random (MAR) and document this as a limitation.
+Random (MAR) and document this as a limitation. Feature filtering 
+and imputation were applied to the full dataset before splitting; 
+because these steps do not use outcome labels, leakage risk is 
+small, although fitting them within each fold would be stricter.
 
 \textbf{Step 4: Stratified train/test split.} An 80/20 stratified 
 split preserved the 6.64\% failure rate in both sets, yielding 
 1,253 training samples (83 failures) and 314 test samples (21 
 failures). Without stratification, random partitioning risks 
-producing test folds with zero failures.
+substantially unequal failure rates between training and test sets.
 
 \textbf{Step 5: Feature scaling.} StandardScaler was applied 
 within the cross-validation loop --- fitted on training folds 
 only and applied to test folds --- to prevent data leakage from 
 test set statistics into scaling parameters \cite{pedregosa2011scikit}.
-
-All preprocessing thresholds represent deliberate research 
-decisions with documented tradeoffs; sensitivity to threshold 
-selection is examined in Section~\ref{sec:sensitivity}.
 
 \subsection{Evaluation Framework}
 
@@ -195,18 +247,36 @@ all wafers achieves 93.36\% accuracy while recovering zero failures
 --- a result that appears strong but is operationally worthless in 
 a semiconductor fab where each missed failure incurs the full cost 
 of remaining process steps.
+Formally, Precision and Recall are defined as:
+\begin{equation}
+\text{Precision} = \frac{TP}{TP + FP}, \quad 
+\text{Recall} = \frac{TP}{TP + FN}
+\label{eq:precision_recall}
+\end{equation}
+
+where $TP$, $FP$, and $FN$ denote true positives, false 
+positives, and false negatives respectively. PR-AUC is 
+computed as:
+\begin{equation}
+\text{PR-AUC} = \int_0^1 P(R) \, dR
+\label{eq:prauc}
+\end{equation}
+
+where $P(R)$ denotes precision as a function of recall 
+across all classification thresholds.
 
 PR-AUC is preferred over ROC-AUC for this imbalanced setting. 
 ROC-AUC incorporates False Positive Rate, which uses the large 
 negative class (1,463 passes) as its denominator --- even 
 substantial misclassification of passing wafers produces a small 
 FPR, making models appear more capable than they are on the 
-minority failure class \cite{chawla2002smote}. Precision and 
-Recall both use the minority class in their denominators, ensuring 
-PR-AUC directly measures how well the model identifies the 104 
-failures without dilution by the majority class.
+minority failure class \cite{davis2006relationship}. Precision and 
+recall are both defined with respect to the failure class --- 
+recall over actual failures and precision over predicted failures 
+--- so PR-AUC directly measures how well the model identifies the 
+104 failures rather than being dominated by the majority class.
 
-Threshold optimization is examined explicitly because the default 
+Threshold selection is examined explicitly because the default 
 classification threshold of 0.5 is inappropriate for severe class 
 imbalance. In semiconductor manufacturing, false negatives --- 
 wafers predicted as passing that subsequently fail --- consume all 
@@ -218,18 +288,19 @@ lowering the classification threshold to prioritize recall,
 accepting additional false alarms in exchange for recovering more 
 true failures \cite{stich2020yield}. The optimal threshold depends 
 on fab-specific cost ratios not available for the SECOM dataset; 
-we therefore report performance across the full threshold range.
+we therefore report threshold-independent PR-AUC alongside 
+per-wafer results at each model's selected operating threshold 
+(Section~\ref{sec:operational}).
 
 \section{Experimental Methodology}
 
 \subsection{Models}
 
-Logistic regression serves as the linear baseline 
-\cite{rymarczyk2019logistic}. Its coefficients directly indicate 
+Logistic regression serves as the linear baseline. Its coefficients directly indicate 
 feature influence direction and magnitude, providing interpretability 
 absent in ensemble methods. Class imbalance is addressed via 
 \texttt{class\_weight=`balanced'}, which weights failure samples 
-approximately 15$\times$ relative to passes during training, 
+approximately 14$\times$ relative to passes during training, 
 preventing the model from optimizing exclusively for the majority 
 class. L2 regularization with $C=1.0$ controls overfitting in the 
 high-dimensional feature space (446 features, 1,253 training 
@@ -244,31 +315,32 @@ violate the linearity assumption of logistic regression. The
 only $\sqrt{446} \approx 21$ randomly selected features at each 
 split, decorrelating trees so that different trees find different 
 patterns and make different errors --- when 300 trees are averaged, 
-errors cancel out. Three hundred estimators provide sufficient 
-variance reduction for this dataset size. Trees are grown to full 
-depth (\texttt{max\_depth=None}) to assess maximum model capacity, 
-with overfitting examined explicitly via train versus test PR-AUC 
-comparison. Class imbalance is handled identically to logistic 
+these errors partially cancel. Three hundred estimators provide 
+sufficient variance reduction for this dataset size. Trees are grown 
+to full depth (\texttt{max\_depth=None}) to assess maximum model 
+capacity, with overfitting examined explicitly via train versus test 
+PR-AUC comparison. Class imbalance is handled identically to logistic 
 regression via \texttt{class\_weight=`balanced'}.
 
 XGBoost is selected as the regularized gradient boosting model 
-\cite{chen2016xgboost}, \cite{dwivedi2024pioneering}, motivated 
-by its sequential error correction mechanism --- each tree is fit to the negative gradient of the loss with 
-respect to current ensemble predictions --- samples with large 
-residuals receive proportionally more correction in subsequent 
-trees, addressing wafer-level prediction errors rather than 
-feature-level diversity as in Random Forest. Key regularization parameters include 
+\cite{chen2016xgboost}, motivated by its 
+sequential error correction mechanism: each tree is fit to the 
+negative gradient of the loss with respect to current ensemble 
+predictions, so samples with large residuals receive proportionally 
+more correction in subsequent trees. This addresses wafer-level 
+prediction errors rather than feature-level diversity as in Random 
+Forest. Key regularization parameters include 
 \texttt{max\_depth=4} (shallow trees preventing memorization), 
 \texttt{learning\_rate=0.05} (conservative per-tree corrections), 
 \texttt{subsample=0.8} and \texttt{colsample\_bytree=0.8} 
 (stochastic sampling decorrelating trees), and L1/L2 regularization 
-(\texttt{reg\_alpha=0.1}, \texttt{reg\_lambda=1.0}) encouraging 
-sparse feature weights in the high-dimensional space. Class 
-imbalance is handled via \texttt{scale\_pos\_weight=14.10}, which 
-multiplies the gradient for failure samples --- amplifying the error 
-signal so subsequent trees prioritize minority class correction, 
-differing mechanically from Random Forest's sample reweighting 
-approach. Early stopping with PR-AUC as the stopping criterion was 
+(\texttt{reg\_alpha=0.1}, \texttt{reg\_lambda=1.0}) penalizing leaf 
+weights to limit model complexity in the high-dimensional space. 
+Class imbalance is handled via \texttt{scale\_pos\_weight=14.10}, 
+the training-set ratio of passes to failures (1,170/83), which 
+scales the loss contribution of failure samples --- amplifying the 
+error signal so subsequent trees prioritize minority class 
+correction. Early stopping with PR-AUC as the stopping criterion was 
 attempted but found unreliable: with only 12 failure samples in 
 the validation fold, PR-AUC estimation was too noisy, causing 
 premature termination at 13 trees. A fixed 200-tree configuration 
@@ -292,20 +364,30 @@ A single held-out test set (314 samples, 21 failures) is reserved
 for per-wafer failure analysis and SHAP computation. Per-wafer 
 comparison identifies which specific failure modes each model 
 handles --- a failure recovered by XGBoost but missed by Random 
-Forest indicates sequential error correction addressed that failure 
-mode; failures missed by both models represent genuinely hard cases 
-potentially requiring additional sensor data or alternative 
-approaches \cite{busch2022yield}.
+Forest suggests that sequential error correction addressed that 
+failure mode; failures missed by both models represent genuinely 
+hard cases potentially requiring additional sensor data or 
+alternative approaches \cite{busch2022yield}.
 
 SHAP (SHapley Additive exPlanations) via TreeExplainer is applied 
 to the Random Forest to provide exact Shapley values for each 
-wafer-feature pair \cite{lundberg2017unified}, \cite{lundberg2020local}. 
-For wafer $i$ and feature $j$, the SHAP value $\phi_{ij}$ represents 
-the marginal contribution of feature $j$ to the prediction for 
-wafer $i$, averaged over all possible feature orderings. Positive 
-values indicate the feature pushed failure probability upward; 
-negative values indicate the opposite. Global importance is 
-computed as mean $|\phi_{ij}|$ across all test wafers.
+wafer-feature pair \cite{lundberg2017unified,lundberg2020local}. 
+For wafer $i$ and feature $j$, the SHAP value $\phi_{ij}$ is 
+formally defined as:
+\begin{equation}
+\phi_{ij} = \sum_{S \subseteq F \setminus \{j\}} 
+\frac{|S|!(|F|-|S|-1)!}{|F|!}
+[f(S \cup \{j\}) - f(S)]
+\label{eq:shap}
+\end{equation}
+
+where $F$ is the full feature set, $S$ is a feature subset, 
+$f(S)$ is the model prediction using only features in $S$, 
+and the sum is taken over all possible feature subsets 
+excluding feature $j$. Positive values indicate the feature pushed 
+failure probability upward; negative values indicate the opposite. 
+Global importance is computed as mean $|\phi_{ij}|$ across all test 
+wafers.
 
 A controlled experiment tests whether binary missingness indicators 
 --- one per feature containing any missing values in the raw data, 
@@ -319,8 +401,8 @@ evidence supporting the hypothesis that sensor dropout carries
 failure signal.
 
 All code, preprocessed data, and model artifacts are publicly 
-available at: \url{https://github.com/sudipkharel779-netizen/
-semiconductor-manufacturing-research}
+available at
+\url{https://github.com/sudipkharel779-netizen/semiconductor-manufacturing-research}.
 
 \section{Results}
 
@@ -335,34 +417,12 @@ the naive baseline of 0.0664, demonstrating that process measurement
 data contains learnable failure signal despite severe class 
 imbalance \cite{zhao2026survey}.
 
-Confidence intervals overlap substantially across Random Forest and 
-XGBoost, precluding strong claims of statistical superiority between 
-these models at this sample size. A Wilcoxon signed-rank test on 
-the five paired fold scores would be the appropriate significance 
-test; with only five observations per model, statistical power is 
-insufficient to distinguish performance differences of the magnitude 
-observed here. The high standard deviation of Logistic Regression 
-($\pm$0.0446) relative to ensemble methods reflects its sensitivity 
-to which specific failures appear in each test fold --- a 
-consequence of the linear model's limited capacity to generalize 
-across heterogeneous failure modes \cite{moldovan2017machine}.
-
-Both ensemble models exhibit severe train-test PR-AUC gaps under 
-single-split evaluation (Random Forest: 0.7257, XGBoost: 0.7506), 
-with training PR-AUC approaching 1.0 for both models. This 
-indicates memorization of the 83 training failures rather than 
-learning generalizable failure patterns --- an expected consequence 
-of the small failure count relative to the 446-dimensional feature 
-space \cite{kim2019fault}. Cross-validation confirms this pattern 
-is not specific to one split. This finding motivates the operational 
-per-wafer analysis in Section~\ref{sec:operational}, where model 
-differences manifest at the individual wafer level despite similar 
-aggregate metrics.
-
-\begin{table}[htbp]
+\begin{table}[!htb]
 \caption{5-Fold Cross-Validated Performance --- SECOM Dataset}
 \label{tab:cv_results}
 \centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
 \begin{tabular}{lccc}
 \hline
 \textbf{Model} & \textbf{PR-AUC} & \textbf{ROC-AUC} & 
@@ -370,15 +430,51 @@ aggregate metrics.
  & \textbf{(mean$\pm$std)} & \textbf{(mean$\pm$std)} & 
 \textbf{(mean)}\\
 \hline
-Naive Baseline & 0.0664$\pm$0.000 & 0.500$\pm$0.000 & --- \\
-Logistic Regression & 0.1773$\pm$0.0446 & 0.6802$\pm$0.0722 & 
-0.9629 \\
+Naive Baseline & 0.0664$\pm$0.0000 & 0.5000$\pm$0.0000 & --- \\
+Logistic Regression & 0.1773$\pm$0.0446 & 0.6802$\pm$0.0722 & 0.9629 \\
 Random Forest & 0.1956$\pm$0.0266 & 0.7623$\pm$0.0303 & 1.0000 \\
-XGBoost (200 trees) & 0.2083$\pm$0.0260 & 0.7350$\pm$0.0427 & 
-1.0000 \\
+XGBoost (200 trees) & 0.2083$\pm$0.0260 & 0.7350$\pm$0.0427 & 1.0000 \\
 \hline
 \end{tabular}
 \end{table}
+
+\begin{figure}[!htb]
+\centering
+\includegraphics[width=\columnwidth]{figures/cv_results_by_fold.png}
+\caption{5-fold cross-validation (a) PR-AUC and (b) ROC-AUC by model.
+Dashed horizontal lines indicate per-model means. XGBoost achieves the
+highest mean PR-AUC (0.208); Random Forest achieves the highest mean
+ROC-AUC (0.762). Fold 1 is the hardest fold for Logistic Regression
+and Random Forest, while XGBoost remains near its mean, consistent
+with its stronger recovery of difficult failure cases.}
+\label{fig:pr_curves}
+\end{figure}
+
+The fold-level standard deviations of Random Forest and XGBoost 
+overlap substantially, precluding strong claims of statistical 
+superiority between these models at this sample size. A Wilcoxon 
+signed-rank test on the five paired fold scores would be the 
+appropriate significance test; however, with only five pairs the 
+smallest attainable two-sided $p$-value is 0.0625, so no difference 
+can reach conventional significance. The high standard deviation of 
+Logistic Regression ($\pm$0.0446) relative to ensemble methods 
+reflects its sensitivity to which specific failures appear in each 
+test fold --- a consequence of the linear model's limited capacity 
+to generalize across heterogeneous failure modes 
+\cite{moldovan2017machine}.
+
+Both ensemble models exhibit severe train-test PR-AUC gaps under 
+single-split evaluation (Random Forest: 0.7257, XGBoost: 0.7506), 
+with training PR-AUC approaching 1.0 for both models. This 
+indicates memorization of the 83 training failures rather than 
+learning generalizable failure patterns --- an expected consequence 
+of the small failure count relative to the 446-dimensional feature 
+space. Single-split evaluation also overstates 
+performance: Random Forest's single-split test PR-AUC (0.2743) 
+exceeds its cross-validated mean by 0.079. Cross-validation 
+confirms that the train-test gap is not specific to one split. 
+Fig.~\ref{fig:pr_curves} shows PR-AUC and ROC-AUC for each model 
+across the five cross-validation folds.
 
 \subsection{Operational Analysis: Per-Wafer Failure Recovery}
 \label{sec:operational}
@@ -389,13 +485,14 @@ question is not the average precision-recall tradeoff but how many
 of the 21 failed wafers in the test set were identified before 
 consuming further processing resources. 
 Table~\ref{tab:wafer_recovery} presents this per-wafer analysis 
-at each model's optimal F1 threshold \cite{he2007fault}.
+at each model's optimal F1 threshold.
 
-\begin{table}[htbp]
+\begin{table}[!htb]
 \caption{Per-Wafer Failure Recovery --- Single Test Set (21 
 Failures)}
 \label{tab:wafer_recovery}
 \centering
+\footnotesize
 \begin{tabular}{lcccc}
 \hline
 \textbf{Model} & \textbf{Threshold} & \textbf{Failures} & 
@@ -410,6 +507,18 @@ XGBoost (200 trees) & 0.35 & 19/21 & 183 & 0.905 \\
 \end{tabular}
 \end{table}
 
+\begin{figure}[!htb]
+\centering
+\includegraphics[width=\columnwidth]{figures/shap_waterfall_FN_wafer37.png}
+\caption{SHAP waterfall plot for Wafer 37 (true failure, 
+missed by Random Forest, caught by XGBoost). Feature 31 
+($\phi = -0.05$) generates a dominant pass-direction signal 
+despite being elevated at 1.947 scaled units, overwhelming 
+failure signals from Features 59 ($\phi = +0.02$) and 
+103 ($\phi = +0.01$).}
+\label{fig:waterfall}
+\end{figure}
+
 Among 21 test failures, XGBoost recovers 19 at threshold 0.35 
 compared to Random Forest's 13 at threshold 0.20. Critically, 
 XGBoost recovers all 13 failures that Random Forest catches plus 
@@ -420,32 +529,38 @@ PR-AUC (0.2494 vs.\ 0.2743), illustrating that PR-AUC and
 operational recall can diverge when threshold optimization is 
 applied to imbalanced problems \cite{srisailam2025fault}.
 
-SHAP analysis (Section~\ref{sec:shap}) identifies one of the six 
-XGBoost-only recoveries as a masking failure mode. In this case 
-(test set wafer index 37), Feature 31 generates a strong 
-pass-direction SHAP contribution ($\phi = -0.05$) despite being 
-elevated at 1.947 scaled units, while Features 59 and 103 generate 
-weaker failure-direction contributions ($\phi = +0.02$ and $+0.01$ 
-respectively). Random Forest, which averages predictions across 
-300 independently trained trees, is unable to correct for this 
-masking effect --- each tree encounters the same suppressing signal 
-and the averaged prediction falls below the detection threshold. 
+Per-wafer SHAP analysis of the Random Forest identifies one of the 
+six XGBoost-only recoveries as a masking case. In this case (test 
+set wafer index 37), Feature 31 generates a strong pass-direction 
+SHAP contribution ($\phi = -0.05$) despite being elevated at 1.947 
+scaled units, while Features 59 and 103 generate weaker 
+failure-direction contributions ($\phi = +0.02$ and $+0.01$ 
+respectively). In Random Forest, trees that split on Feature 31 
+encounter the same suppressing signal, and averaging across 300 
+independently trained trees dilutes the weaker failure signals, so 
+the averaged prediction falls below the detection threshold. 
 XGBoost's sequential boosting mechanism fits each new tree to 
 the negative gradient of the loss function with respect to current 
 predictions --- this gradient is large for samples where the 
 current ensemble predicts poorly, so subsequent trees implicitly 
-allocate more correction capacity to hard-to-predict samples, 
-enabling recovery of this failure mode. \cite{hsu2021multiple}.
+allocate more correction capacity to hard-to-predict samples, a 
+plausible explanation for its recovery of this 
+failure \cite{chen2016xgboost}.
 
-XGBoost's 19-failure recall comes at a cost of 183 false alarms 
-versus Random Forest's 52. The operationally optimal model depends 
-on the fab's cost ratio between missed failures and false alarms. 
-If the cost of processing a failed wafer through remaining steps 
-substantially exceeds re-inspection cost --- a reasonable assumption 
-for high-value advanced node manufacturing --- the XGBoost 
-deployment at threshold 0.35 is economically justified 
-\cite{mendez2026machine}. Fab-specific cost parameters required 
-to quantify this tradeoff are not available in the public SECOM 
+
+Fig.~\ref{fig:waterfall} illustrates the SHAP waterfall for 
+Wafer 37, showing Feature 31's dominant pass-direction contribution 
+overcoming failure signals from Features 59 and 103. XGBoost's 
+19-failure recall comes at a cost of 183 false alarms (202 of 314 
+test wafers flagged, 64\%) versus Random Forest's 52 (65 flagged, 
+21\%). The operationally optimal model depends on the fab's cost 
+ratio between missed failures and false alarms. If the cost of 
+processing a failed wafer through remaining steps substantially 
+exceeds re-inspection cost --- a reasonable assumption for 
+high-value advanced node manufacturing --- the XGBoost deployment 
+at threshold 0.35 may be economically justified 
+\cite{mendez2026machine}. Fab-specific cost parameters required to 
+quantify this tradeoff are not available in the public SECOM 
 dataset.
 
 \subsection{SHAP Interpretability Analysis}
@@ -464,32 +579,45 @@ feature selection: aggressive dimensionality reduction retaining
 only top-10 or top-20 features would discard the majority of 
 predictive signal \cite{kim2017feature}.
 
-Comparison between SHAP mean absolute importance and Random Forest 
-Gini importance reveals complete overlap in the top-10 feature 
-rankings --- all 10 features identified by SHAP appear in the 
-Gini top-10, though ordering differs slightly. This concordance 
-between two theoretically distinct importance measures increases 
-confidence that the identified features carry genuine yield 
-prediction signal rather than reflecting artifacts of either 
-method's specific assumptions \cite{lundberg2020local}. SHAP is 
-preferred for reporting because it provides directional information 
-and per-wafer attribution that Gini importance cannot.
+\begin{figure}[!htb]
+\centering
+\includegraphics[width=\columnwidth]{figures/shap_beeswarm.png}
+\caption{SHAP beeswarm plot for top 20 features. Each dot 
+represents one test wafer. Color indicates feature value 
+(red = high, blue = low). Positive SHAP values push toward 
+failure prediction. Feature 103 shows clear separation between 
+high and low values; Feature 33 acts primarily as a pass 
+indicator.}
+\label{fig:beeswarm}
+\end{figure}
 
-Beeswarm analysis of SHAP values across the test set reveals 
-directional effects for the top features. Feature 103 shows a 
-threshold effect at scaled value $\approx$0: readings below zero 
-push failure probability downward (toward pass), while readings 
-above zero push failure probability upward (toward failure). 
-Feature 59 shows a similar but more gradual relationship --- 
-failure probability increases progressively with Feature 59 value 
-beyond a scaled value of approximately 0.25. Feature 33 exhibits 
-an asymmetric pattern: low values push strongly toward pass 
-prediction, while high values show a weak mixed effect, suggesting 
-Feature 33 operates primarily as a pass indicator rather than a 
-failure driver. These directional relationships are actionable for 
-process engineers: Feature 103 exceeding its threshold represents 
-a candidate statistical process control limit where intervention 
-before end-of-line test may prevent downstream yield loss 
+Fig.~\ref{fig:beeswarm} shows the beeswarm distribution of SHAP 
+values across the top 20 features. Comparison between SHAP mean 
+absolute importance and Random Forest Gini importance reveals 
+complete overlap in the top-10 feature rankings --- all 10 features 
+identified by SHAP appear in the Gini top-10, though ordering differs 
+slightly. This concordance between two theoretically distinct 
+importance measures increases confidence that the identified 
+features carry genuine yield prediction signal rather than 
+reflecting artifacts of either method's specific assumptions 
+\cite{lundberg2020local}. SHAP is preferred for reporting because 
+it provides directional information and per-wafer attribution that 
+Gini importance cannot.
+
+The beeswarm also reveals directional effects for the top features. 
+Feature 103 shows clear separation: high values push failure 
+probability upward, while low values push it toward pass. Feature 
+59 shows a similar but more gradual relationship, with high values 
+pushing toward failure. Feature 33 exhibits an asymmetric pattern: 
+low values push strongly toward pass prediction, while high values 
+show a weak mixed effect, suggesting Feature 33 operates primarily 
+as a pass indicator rather than a failure driver. Feature 31 shows 
+the reverse of Feature 103: high values push strongly toward pass, 
+consistent with its suppressing role in the Wafer 37 masking case. 
+These directional relationships are actionable for process 
+engineers: elevated Feature 103 readings represent a candidate 
+statistical process control signal where intervention before 
+end-of-line test may prevent downstream yield loss 
 \cite{wang2024improved}.
 
 \subsection{Sensitivity Analysis}
@@ -502,13 +630,30 @@ three missingness threshold conditions: 30\%, 50\% (baseline),
 and 70\%. Feature counts retained were 442, 446, and 466 
 respectively. CV PR-AUC results were 0.1797 $\pm$ 0.0241, 
 0.1910 $\pm$ 0.0271, and 0.1916 $\pm$ 0.0342 --- a range of 
-0.012 across all three conditions. This range is smaller than 
-the within-threshold fold variance at any single condition, 
-indicating that threshold choice introduces less variation than 
-fold-to-fold sampling variation. The stability of results across 
-preprocessing choices indicates that the reported findings reflect 
-properties of the manufacturing process data rather than artifacts 
-of specific threshold selections \cite{farrag2026iterative}.
+0.012 across all three conditions. This range is smaller than the 
+within-threshold standard deviation at every condition 
+(0.024--0.034), indicating that threshold choice introduces less 
+variation than fold-to-fold sampling. The 50\% condition reproduces the Dataset~A baseline of the 
+missingness experiment (0.1910); both analyses used a pipeline 
+separate from that of Table~\ref{tab:cv_results}, so absolute values 
+differ from the 0.2083 reported there, and comparisons should be made 
+across thresholds within this analysis. Fig.~\ref{fig:sensitivity} visualizes CV 
+PR-AUC stability across the three threshold conditions, indicating 
+that the reported findings reflect properties of the manufacturing 
+process data rather than artifacts of specific threshold selections 
+\cite{park2026data}.
+
+\begin{figure}[!htb]
+\centering
+\includegraphics[width=\columnwidth]{figures/sensitivity_analysis.png}
+\caption{CV PR-AUC across three missingness threshold 
+conditions (30\%, 50\%, 70\%). Error bars show $\pm$1 
+standard deviation across 5 folds. The range of 0.012 
+across thresholds is smaller than the within-threshold 
+standard deviation, indicating robustness to preprocessing 
+choice.}
+\label{fig:sensitivity}
+\end{figure}
 
 \section{Discussion}
 
@@ -526,28 +671,27 @@ statistically reliable yield prediction models \cite{huang2023survey}.
 
 The controlled missingness experiment produced an inconclusive 
 result --- adding 538 binary missingness indicators improved CV 
-PR-AUC by only $+$0.0062, within the noise of the cross-validation 
-procedure. This finding has practical implications: sensor dropout 
-in the SECOM dataset appears predominantly random rather than 
-failure-correlated, and the median imputation strategy does not 
-discard meaningful failure signal. This null result is itself a 
-contribution --- it prevents future researchers from pursuing the 
-same hypothesis on this dataset without empirical basis. Datasets 
-with larger failure counts may have sufficient statistical power 
-to detect a genuine but small missingness effect \cite{riaz2025robust}.
+PR-AUC by only $+$0.0062 (0.1910 to 0.1972), below the pre-specified 0.01 threshold 
+and within the noise of the cross-validation procedure. This 
+finding has practical implications: sensor dropout in the SECOM 
+dataset appears predominantly random rather than failure-correlated, 
+and the median imputation strategy does not appear to discard 
+meaningful failure signal. This null result provides a reference 
+point for future work on this dataset, although datasets with larger 
+failure counts may have sufficient statistical power to detect a 
+genuine but small missingness effect \cite{riaz2025robust}.
 
-The sensor masking failure mode identified through SHAP analysis 
-has direct implications for process monitoring system design 
+The sensor masking case identified through SHAP analysis has direct 
+implications for process monitoring system design 
 \cite{srisailam2025fault}. Statistical process control systems 
 that examine individual sensors independently cannot detect failure 
-modes where a within-specification sensor reading suppresses 
-failure signals from other sensors. The finding that XGBoost's 
-sequential error correction recovers this failure class where 
-Random Forest cannot motivates development of ensemble 
+modes where one sensor reading suppresses failure signals from 
+other sensors. The observation that XGBoost recovers this failure 
+where Random Forest does not motivates development of ensemble 
 architectures that explicitly model sensor interactions and correct 
 for masking effects --- consistent with recent directions in 
 multivariate manufacturing intelligence research 
-\cite{hsu2021multiple}, \cite{kim2019fault}.
+\cite{kim2019fault,hsu2021multiple}.
 
 \section{Conclusion}
 
@@ -558,18 +702,18 @@ interpretability analysis, and a controlled missingness experiment.
 Cross-validated PR-AUC results show XGBoost marginally 
 outperforming Random Forest (0.2083 vs.\ 0.1956), though 
 differences are within noise bounds given the dataset's 104 
-failures; per-wafer analysis reveals XGBoost recovers 19 of 21 
-test failures including a sensor masking failure mode undetectable 
-by Random Forest, while the missingness hypothesis was not 
-supported at this sample size. These findings motivate two 
-directions for future work: a stacking ensemble combining Random 
-Forest probability calibration with XGBoost's sequential error 
-correction to reduce false alarms while maintaining high recall, 
-and replication of this analysis on larger proprietary 
-semiconductor datasets where statistical power is sufficient to 
-detect small but operationally meaningful performance differences.
+failures. Per-wafer analysis shows that XGBoost recovers 19 of 21 
+test failures, including a sensor masking case missed by Random 
+Forest, at the cost of substantially more false alarms; the 
+missingness hypothesis was not supported at this sample size. These 
+findings motivate two directions for future work: a stacking 
+ensemble combining Random Forest's lower false-alarm rate with 
+XGBoost's sequential error correction to reduce false alarms while 
+maintaining high recall, and replication of this analysis on larger 
+proprietary semiconductor datasets where statistical power is 
+sufficient to detect small but operationally meaningful performance 
+differences.
 
-\nocite{*}
 \bibliographystyle{IEEEtran}
 \bibliography{references}
 
