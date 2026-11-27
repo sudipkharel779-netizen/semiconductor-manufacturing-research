@@ -51,3 +51,5 @@ affect predictive model performance?
 - [ ] Advanced modeling and evaluation
 - [ ] SHAP interpretability analysis
 - [ ] Report write-up (IEEE format)
+
+Notebook 09 audits the preprocessing and threshold-selection leakage in notebooks 02-07 (and the preprocessing in 08); the numbers in my SOP and resume come from notebook 09.
