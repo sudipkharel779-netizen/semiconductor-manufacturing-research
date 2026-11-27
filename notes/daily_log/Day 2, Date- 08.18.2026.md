@@ -58,7 +58,7 @@ readiness, not just coursework.
 
 ## What I learned
 
-1. The dataset contains 1,567 observations and 591 features. Each row is one production lot; each column is one sensor measurement or process parameter recorded during manufacturing
+1. The dataset contains 1,567 observations and 590 features. Each row is one production lot; each column is one sensor measurement or process parameter recorded during manufacturing
 2. **What does a 6.64% failure rate mean for a semiconductor fab? Is that good or bad from a manufacturing perspective?**
    -->6.64% failure rate mean 104 wafer were identified as failure during inspection. From Manufacturing perspective, it is a bad number specially when we are talking about semiconductor industry since those 6.64% failure is total waste for company after processing them through many steps that constitute time ,labor, resources etc. for company.
 3. **If you trained a model that predicted "pass" for every single wafer, what accuracy would it get?**
