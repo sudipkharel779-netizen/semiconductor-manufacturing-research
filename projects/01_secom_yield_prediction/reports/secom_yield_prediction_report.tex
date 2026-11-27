@@ -42,17 +42,16 @@ learning models --- logistic regression, Random Forest, and XGBoost
 dataset, incorporating SHAP interpretability analysis, a controlled 
 experiment on missingness as a predictive signal, and recall-oriented 
 threshold selection motivated by asymmetric misclassification costs. 
-Cross-validated PR-AUC results show that performance differences 
-between models are within noise bounds given the dataset's 104 
-failure samples, but XGBoost achieves substantially higher 
-operational recall --- recovering 19 of 21 test failures, including 
-a failure masked by competing sensor signals that Random Forest 
-missed --- at the cost of a higher false-alarm rate. SHAP analysis 
-shows that 237 of 446 features are required to account for 80\% of 
-total feature importance, indicating that predictive signal is 
-broadly distributed rather than concentrated in a small subset. This 
-challenges simple feature selection approaches and suggests that 
-yield failure reflects multi-causal process interactions.
+Cross-validated PR-AUC results show that performance differences
+between models are within noise bounds given the dataset's 104
+failure samples (Random Forest 0.185, XGBoost 0.191). A leakage
+audit that refits all preprocessing inside each fold and selects
+thresholds from out-of-fold training predictions finds that
+preprocessing leakage has no detectable effect, whereas selecting
+thresholds on the test set substantially overstated recall: at
+audited thresholds both models recover 4 of 21 test failures,
+although both rank failures well above chance (Random Forest
+recovers 10 of 21 among the top 10\% of wafers by score).
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -104,13 +103,11 @@ The primary contributions of this paper are:
 \item A cross-validated comparative study of three model classes 
 for SECOM yield prediction, providing honest uncertainty 
 quantification that reveals single-split results overestimate 
-Random Forest performance by 0.079 PR-AUC.
+Random Forest performance by 0.067 PR-AUC.
 
 \item SHAP-based identification of a sensor masking case in which 
-Feature 31 suppresses failure signals from Features 59 and 103, 
-together with evidence that XGBoost recovers this failure where 
-Random Forest does not, consistent with gradient boosting's 
-sequential error correction \cite{lundberg2020local}.
+Feature 31 suppresses failure signals from Features 59 and 103
+ \cite{lundberg2020local}.
 
 \item A controlled experiment testing whether missingness patterns 
 carry failure signal beyond imputed values, finding no meaningful 
@@ -222,10 +219,10 @@ was preferred over mean imputation due to the presence of outliers
 from equipment anomalies \cite{riaz2025robust}. KNN imputation and 
 MICE were rejected due to computational cost and unverifiable 
 distributional assumptions respectively. We assume Missing At 
-Random (MAR) and document this as a limitation. Feature filtering 
-and imputation were applied to the full dataset before splitting; 
-because these steps do not use outcome labels, leakage risk is 
-small, although fitting them within each fold would be stricter.
+Random (MAR) and document this as a limitation. In the original analysis, feature filtering and imputation were applied to the full dataset before splitting. A leakage audit
+(Section~\ref{sec:audit}) refit both inside every fold and found a
+paired PR-AUC change of $-0.0033 \pm 0.0044$ for Random Forest and
+$+0.0028 \pm 0.0149$ for XGBoost, within fold-to-fold noise.
 
 \textbf{Step 4: Stratified train/test split.} An 80/20 stratified 
 split preserved the 6.64\% failure rate in both sets, yielding 
@@ -353,10 +350,9 @@ as the primary framework, with mean $\pm$ standard deviation of
 PR-AUC reported across folds \cite{kim2017feature}. A single 80/20 
 train/test split exhibits high variance with only 104 total 
 failures; cross-validation averages across multiple splits to 
-provide more reliable estimates. All models are wrapped in 
-scikit-learn Pipelines \cite{pedregosa2011scikit} ensuring the 
-StandardScaler is fitted only on training folds and applied to 
-test folds, preventing data leakage. Each test fold contains 
+provide more reliable estimates.In the audit, feature filtering, imputation and scaling are all
+placed inside scikit-learn Pipelines \cite{pedregosa2011scikit}, so
+every fitted step is learned on training folds only. Each test fold contains 
 approximately 21 failures, consistent with the held-out test 
 set size.
 
@@ -408,17 +404,20 @@ available at
 
 \subsection{Cross-Validated Model Comparison}
 
-Table~\ref{tab:cv_results} presents 5-fold cross-validated 
-performance across all models. XGBoost achieves the highest mean 
-PR-AUC (0.2083 $\pm$ 0.0260), marginally outperforming Random 
-Forest (0.1956 $\pm$ 0.0266) and Logistic Regression (0.1773 
-$\pm$ 0.0446). All three models achieve PR-AUC meaningfully above 
-the naive baseline of 0.0664, demonstrating that process measurement 
-data contains learnable failure signal despite severe class 
-imbalance \cite{zhao2026survey}.
+Table~\ref{tab:cv_results} presents 5-fold cross-validated
+performance across all models. Under the audited pipeline, XGBoost
+(0.1913 $\pm$ 0.0139) and Random Forest (0.1850 $\pm$ 0.0287) are
+indistinguishable: their difference of 0.0063 is smaller than
+either standard deviation. Logistic Regression
+(0.1773 $\pm$ 0.0446) was not re-run under the audited pipeline.
+All three models achieve PR-AUC meaningfully above the naive
+baseline of 0.0664, demonstrating that process measurement data
+contains learnable failure signal despite severe class imbalance
+\cite{zhao2026survey}.
 
 \begin{table}[!htb]
-\caption{5-Fold Cross-Validated Performance --- SECOM Dataset}
+\caption{Audited 5-Fold Cross-Validated Performance --- SECOM Dataset.
+$^{\dagger}$ Not re-run under the audited pipeline.}
 \label{tab:cv_results}
 \centering
 \footnotesize
@@ -431,9 +430,9 @@ imbalance \cite{zhao2026survey}.
 \textbf{(mean)}\\
 \hline
 Naive Baseline & 0.0664$\pm$0.0000 & 0.5000$\pm$0.0000 & --- \\
-Logistic Regression & 0.1773$\pm$0.0446 & 0.6802$\pm$0.0722 & 0.9629 \\
-Random Forest & 0.1956$\pm$0.0266 & 0.7623$\pm$0.0303 & 1.0000 \\
-XGBoost (200 trees) & 0.2083$\pm$0.0260 & 0.7350$\pm$0.0427 & 1.0000 \\
+Logistic Regression$^{\dagger}$ & 0.1773$\pm$0.0446 & 0.6802$\pm$0.0722 & 0.9629 \\
+Random Forest & 0.1850$\pm$0.0287 & --- & 1.0000 \\
+XGBoost (200 trees) & 0.1913$\pm$0.0139 & --- & 1.0000 \\
 \hline
 \end{tabular}
 \end{table}
@@ -441,12 +440,12 @@ XGBoost (200 trees) & 0.2083$\pm$0.0260 & 0.7350$\pm$0.0427 & 1.0000 \\
 \begin{figure}[!htb]
 \centering
 \includegraphics[width=\columnwidth]{figures/cv_results_by_fold.png}
-\caption{5-fold cross-validation (a) PR-AUC and (b) ROC-AUC by model.
-Dashed horizontal lines indicate per-model means. XGBoost achieves the
-highest mean PR-AUC (0.208); Random Forest achieves the highest mean
-ROC-AUC (0.762). Fold 1 is the hardest fold for Logistic Regression
-and Random Forest, while XGBoost remains near its mean, consistent
-with its stronger recovery of difficult failure cases.}
+\caption{5-fold cross-validation (a) PR-AUC and (b) ROC-AUC by model,
+from the original analysis (before the leakage audit). Dashed
+horizontal lines indicate per-model means. The PR-AUC difference
+between the two ensemble models is within noise (fold standard
+deviations of about 0.026). Audited PR-AUC values are given in
+Table~\ref{tab:cv_results}.}
 \label{fig:pr_curves}
 \end{figure}
 
@@ -463,17 +462,15 @@ test fold --- a consequence of the linear model's limited capacity
 to generalize across heterogeneous failure modes 
 \cite{moldovan2017machine}.
 
-Both ensemble models exhibit severe train-test PR-AUC gaps under 
-single-split evaluation (Random Forest: 0.7257, XGBoost: 0.7506), 
-with training PR-AUC approaching 1.0 for both models. This 
-indicates memorization of the 83 training failures rather than 
-learning generalizable failure patterns --- an expected consequence 
-of the small failure count relative to the 446-dimensional feature 
-space. Single-split evaluation also overstates 
-performance: Random Forest's single-split test PR-AUC (0.2743) 
-exceeds its cross-validated mean by 0.079. Cross-validation 
-confirms that the train-test gap is not specific to one split. 
-Fig.~\ref{fig:pr_curves} shows PR-AUC and ROC-AUC for each model 
+Both ensemble models reach a training PR-AUC of 1.0000 in every
+fold while held-out PR-AUC is 0.185 (Random Forest) and 0.191
+(XGBoost), indicating memorization of the training failures rather
+than generalizable failure patterns, an expected consequence of
+the small failure count relative to the 446-dimensional feature
+space. Single-split evaluation also overstates performance:
+Random Forest's audited single-split test PR-AUC (0.2519) exceeds
+its cross-validated mean by 0.067.
+Fig.~\ref{fig:pr_curves} shows PR-AUC and ROC-AUC for each model
 across the five cross-validation folds.
 
 \subsection{Operational Analysis: Per-Wafer Failure Recovery}
@@ -485,24 +482,25 @@ question is not the average precision-recall tradeoff but how many
 of the 21 failed wafers in the test set were identified before 
 consuming further processing resources. 
 Table~\ref{tab:wafer_recovery} presents this per-wafer analysis 
-at each model's optimal F1 threshold.
+at each model's audited threshold (chosen by maximum F1 on out-of-fold training predictions and applied once to the test set)
 
 \begin{table}[!htb]
-\caption{Per-Wafer Failure Recovery --- Single Test Set (21 
-Failures)}
+\caption{Per-Wafer Failure Recovery --- Single Test Set (21
+Failures). $^{\dagger}$ Threshold chosen on the test set; not
+re-audited.}
 \label{tab:wafer_recovery}
 \centering
 \footnotesize
 \begin{tabular}{lcccc}
 \hline
-\textbf{Model} & \textbf{Threshold} & \textbf{Failures} & 
+\textbf{Model} & \textbf{Threshold} & \textbf{Failures} &
 \textbf{False} & \textbf{Recall}\\
  & & \textbf{Caught} & \textbf{Alarms} & \\
 \hline
 Naive Baseline & --- & 0/21 & 0 & 0.000 \\
-Logistic Regression & 0.55 & 4/21 & 32 & 0.190 \\
-Random Forest & 0.20 & 13/21 & 52 & 0.619 \\
-XGBoost (200 trees) & 0.35 & 19/21 & 183 & 0.905 \\
+Logistic Regression$^{\dagger}$ & 0.55 & 4/21 & 32 & 0.190 \\
+Random Forest & 0.280 & 4/21 & 14 & 0.190 \\
+XGBoost (200 trees) & 0.140 & 4/21 & 17 & 0.190 \\
 \hline
 \end{tabular}
 \end{table}
@@ -511,7 +509,7 @@ XGBoost (200 trees) & 0.35 & 19/21 & 183 & 0.905 \\
 \centering
 \includegraphics[width=\columnwidth]{figures/shap_waterfall_FN_wafer37.png}
 \caption{SHAP waterfall plot for Wafer 37 (true failure, 
-missed by Random Forest, caught by XGBoost). Feature 31 
+missed by Random Forest, missed by Random Forest at its audited threshold. Feature 31 
 ($\phi = -0.05$) generates a dominant pass-direction signal 
 despite being elevated at 1.947 scaled units, overwhelming 
 failure signals from Features 59 ($\phi = +0.02$) and 
@@ -519,15 +517,16 @@ failure signals from Features 59 ($\phi = +0.02$) and
 \label{fig:waterfall}
 \end{figure}
 
-Among 21 test failures, XGBoost recovers 19 at threshold 0.35 
-compared to Random Forest's 13 at threshold 0.20. Critically, 
-XGBoost recovers all 13 failures that Random Forest catches plus 
-6 additional failures --- Random Forest catches zero failures that 
-XGBoost misses. This strict dominance at the individual wafer 
-level occurs despite XGBoost's marginally lower single-split 
-PR-AUC (0.2494 vs.\ 0.2743), illustrating that PR-AUC and 
-operational recall can diverge when threshold optimization is 
-applied to imbalanced problems \cite{srisailam2025fault}.
+Among 21 test failures, both models recover 4 at their audited
+thresholds (95\% Clopper--Pearson interval 0.05--0.42 for both), so
+the test set cannot distinguish them. Ranking by score instead of
+thresholding shows more signal: flagging the top 10\% of test wafers
+(32 wafers) recovers 10 failures with Random Forest and 5 with
+XGBoost, against 2.1 expected by chance; at 20\% (63 wafers) the
+counts are 12 and 11 against 4.2 expected. The thresholds used in
+an earlier version of this analysis (0.20 for Random Forest, 0.35
+for XGBoost) were chosen by sweeping the test set and are not
+reported as results. \cite{srisailam2025fault}.
 
 Per-wafer SHAP analysis of the Random Forest identifies one of the 
 six XGBoost-only recoveries as a masking case. In this case (test 
@@ -548,20 +547,55 @@ plausible explanation for its recovery of this
 failure \cite{chen2016xgboost}.
 
 
-Fig.~\ref{fig:waterfall} illustrates the SHAP waterfall for 
-Wafer 37, showing Feature 31's dominant pass-direction contribution 
-overcoming failure signals from Features 59 and 103. XGBoost's 
-19-failure recall comes at a cost of 183 false alarms (202 of 314 
-test wafers flagged, 64\%) versus Random Forest's 52 (65 flagged, 
-21\%). The operationally optimal model depends on the fab's cost 
-ratio between missed failures and false alarms. If the cost of 
-processing a failed wafer through remaining steps substantially 
-exceeds re-inspection cost --- a reasonable assumption for 
-high-value advanced node manufacturing --- the XGBoost deployment 
-at threshold 0.35 may be economically justified 
-\cite{mendez2026machine}. Fab-specific cost parameters required to 
-quantify this tradeoff are not available in the public SECOM 
-dataset.
+Fig.~\ref{fig:waterfall} illustrates the SHAP waterfall for
+Wafer 37, showing Feature 31's dominant pass-direction contribution
+overcoming failure signals from Features 59 and 103. Under the
+audited models neither Random Forest (top 36.9\% of test scores)
+nor XGBoost (top 77.4\%) flags this wafer, so we make no claim that
+gradient boosting recovers masked failures. The appropriate operating
+point depends on the fab's cost ratio between missed failures and
+false alarms, which is not available in the public SECOM dataset; a
+cost-based rule rather than maximum F1 would be the right selection
+criterion, and with 83 training failures any selected threshold is
+itself noisy.
+
+\subsection{Leakage Audit}
+\label{sec:audit}
+
+Two leakage sources in the original analysis were audited by
+re-running everything from the raw data with all fitted steps
+(variance filter, missingness filter, median imputer, scaler,
+model) inside each cross-validation fold. Preprocessing leakage had
+no detectable effect on CV PR-AUC: the paired difference was
+$-0.0033 \pm 0.0044$ for Random Forest and $+0.0028 \pm 0.0149$
+for XGBoost. Threshold selection mattered more.
+Table~\ref{tab:audit} separates the old thresholds, a test-set
+sweep, and the audited out-of-fold threshold.
+
+\begin{table}[!htb]
+\caption{Threshold Diagnostics on the Audited Models (21 Test Failures)}
+\label{tab:audit}
+\centering
+\footnotesize
+\begin{tabular}{llccc}
+\hline
+\textbf{Model} & \textbf{Rule} & \textbf{Thr.} & \textbf{Caught} & \textbf{False}\\
+ & & & & \textbf{Alarms}\\
+\hline
+Random Forest & Old threshold & 0.200 & 12/21 & 56 \\
+ & Test-set sweep & 0.256 & 10/21 & 18 \\
+ & Audited (OOF) & 0.280 & 4/21 & 14 \\
+XGBoost & Old threshold & 0.350 & 1/21 & 3 \\
+ & Test-set sweep & 0.085 & 11/21 & 39 \\
+ & Audited (OOF) & 0.140 & 4/21 & 17 \\
+\hline
+\end{tabular}
+\end{table}
+
+The original XGBoost threshold of 0.35 had been derived from an
+early-stopped model, not the 200-tree model reported alongside it,
+so it does not transfer. The audited results and code are in the
+project repository (notebook 09).
 
 \subsection{SHAP Interpretability Analysis}
 \label{sec:shap}
@@ -669,6 +703,13 @@ Future work should examine larger proprietary semiconductor datasets
 or apply transfer learning across multiple fab datasets to build 
 statistically reliable yield prediction models \cite{huang2023survey}.
 
+Thresholds were selected from only 83 training failures and are
+therefore noisy, and the model classes and hyperparameters were
+chosen in earlier experiments that examined the test set. Folds
+are stratified random rather than time-ordered. The sensitivity
+and missingness experiments used globally fitted preprocessing and
+were not re-run under the audited pipeline.
+
 The controlled missingness experiment produced an inconclusive 
 result --- adding 538 binary missingness indicators improved CV 
 PR-AUC by only $+$0.0062 (0.1910 to 0.1972), below the pre-specified 0.01 threshold 
@@ -699,20 +740,19 @@ This paper presented a comparative study of logistic regression,
 Random Forest, and XGBoost for semiconductor yield prediction on 
 the SECOM dataset, incorporating cross-validated evaluation, SHAP 
 interpretability analysis, and a controlled missingness experiment. 
-Cross-validated PR-AUC results show XGBoost marginally 
-outperforming Random Forest (0.2083 vs.\ 0.1956), though 
-differences are within noise bounds given the dataset's 104 
-failures. Per-wafer analysis shows that XGBoost recovers 19 of 21 
-test failures, including a sensor masking case missed by Random 
-Forest, at the cost of substantially more false alarms; the 
-missingness hypothesis was not supported at this sample size. These 
-findings motivate two directions for future work: a stacking 
-ensemble combining Random Forest's lower false-alarm rate with 
-XGBoost's sequential error correction to reduce false alarms while 
-maintaining high recall, and replication of this analysis on larger 
-proprietary semiconductor datasets where statistical power is 
-sufficient to detect small but operationally meaningful performance 
-differences.
+Cross-validated PR-AUC results show Random Forest and XGBoost
+statistically indistinguishable (0.1850 vs.\ 0.1913), consistent
+with the dataset's 104 failures. A leakage audit found no
+detectable effect of global preprocessing, but showed that
+thresholds selected on the test set overstated recall: at audited
+thresholds both models recover 4 of 21 test failures, although both
+rank failures well above chance. The missingness hypothesis was not
+supported at this sample size. These findings motivate three
+directions for future work: cost-based and time-ordered threshold
+evaluation, replication with leakage-safe sensitivity and
+missingness experiments, and replication on larger proprietary
+semiconductor datasets where statistical power is sufficient to
+detect small but operationally meaningful differences.
 
 \section*{Acknowledgment}
 The author used Claude (Anthropic) and Cursor for assistance
