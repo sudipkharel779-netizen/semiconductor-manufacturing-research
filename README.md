@@ -83,7 +83,7 @@ Two files required:
 The full IEEE-format report is available at:  
 `projects/01_secom_yield_prediction/reports/secom_yield_prediction_report.pdf`
 
-The report covers dataset characterization, preprocessing decisions, comparative model evaluation with cross-validated PR-AUC, SHAP interpretability analysis, a controlled missingness experiment, a preprocessing sensitivity analysis, and the leakage audit. A preprint will be posted to arXiv upon finalization.
+The report covers dataset characterization, preprocessing decisions, comparative model evaluation with cross-validated PR-AUC, SHAP interpretability analysis, a controlled missingness experiment, a preprocessing sensitivity analysis, and the leakage audit.
 
 ## Research Identity
 
