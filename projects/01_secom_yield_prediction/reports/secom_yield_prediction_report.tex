@@ -350,19 +350,16 @@ as the primary framework, with mean $\pm$ standard deviation of
 PR-AUC reported across folds \cite{kim2017feature}. A single 80/20 
 train/test split exhibits high variance with only 104 total 
 failures; cross-validation averages across multiple splits to 
-provide more reliable estimates.In the audit, feature filtering, imputation and scaling are all
+provide more reliable estimates. In the audit, feature filtering, imputation and scaling are all
 placed inside scikit-learn Pipelines \cite{pedregosa2011scikit}, so
 every fitted step is learned on training folds only. Each test fold contains 
 approximately 21 failures, consistent with the held-out test 
 set size.
 
 A single held-out test set (314 samples, 21 failures) is reserved 
-for per-wafer failure analysis and SHAP computation. Per-wafer 
-comparison identifies which specific failure modes each model 
-handles --- a failure recovered by XGBoost but missed by Random 
-Forest suggests that sequential error correction addressed that 
-failure mode; failures missed by both models represent genuinely 
-hard cases potentially requiring additional sensor data or 
+for Per-wafer comparison identifies which specific failure modes each
+model handles; failures missed by both models represent genuinely
+hard cases potentially requiring additional sensor data or
 alternative approaches \cite{busch2022yield}.
 
 SHAP (SHapley Additive exPlanations) via TreeExplainer is applied 
@@ -482,7 +479,7 @@ question is not the average precision-recall tradeoff but how many
 of the 21 failed wafers in the test set were identified before 
 consuming further processing resources. 
 Table~\ref{tab:wafer_recovery} presents this per-wafer analysis 
-at each model's audited threshold (chosen by maximum F1 on out-of-fold training predictions and applied once to the test set)
+at each model's audited threshold (chosen by maximum F1 on out-of-fold training predictions and applied once to the test set).
 
 \begin{table}[!htb]
 \caption{Per-Wafer Failure Recovery --- Single Test Set (21
@@ -509,7 +506,7 @@ XGBoost (200 trees) & 0.140 & 4/21 & 17 & 0.190 \\
 \centering
 \includegraphics[width=\columnwidth]{figures/shap_waterfall_FN_wafer37.png}
 \caption{SHAP waterfall plot for Wafer 37 (true failure, 
-missed by Random Forest, missed by Random Forest at its audited threshold. Feature 31 
+missed by Random Forest, missed by Random Forest at its audited threshold). Feature 31 
 ($\phi = -0.05$) generates a dominant pass-direction signal 
 despite being elevated at 1.947 scaled units, overwhelming 
 failure signals from Features 59 ($\phi = +0.02$) and 
@@ -526,25 +523,23 @@ XGBoost, against 2.1 expected by chance; at 20\% (63 wafers) the
 counts are 12 and 11 against 4.2 expected. The thresholds used in
 an earlier version of this analysis (0.20 for Random Forest, 0.35
 for XGBoost) were chosen by sweeping the test set and are not
-reported as results. \cite{srisailam2025fault}.
+reported as results.
 
-Per-wafer SHAP analysis of the Random Forest identifies one of the 
-six XGBoost-only recoveries as a masking case. In this case (test 
-set wafer index 37), Feature 31 generates a strong pass-direction 
-SHAP contribution ($\phi = -0.05$) despite being elevated at 1.947 
-scaled units, while Features 59 and 103 generate weaker 
-failure-direction contributions ($\phi = +0.02$ and $+0.01$ 
-respectively). In Random Forest, trees that split on Feature 31 
-encounter the same suppressing signal, and averaging across 300 
-independently trained trees dilutes the weaker failure signals, so 
-the averaged prediction falls below the detection threshold. 
-XGBoost's sequential boosting mechanism fits each new tree to 
-the negative gradient of the loss function with respect to current 
-predictions --- this gradient is large for samples where the 
-current ensemble predicts poorly, so subsequent trees implicitly 
-allocate more correction capacity to hard-to-predict samples, a 
-plausible explanation for its recovery of this 
-failure \cite{chen2016xgboost}.
+Per-wafer SHAP analysis of the Random Forest examines Wafer 37
+(test set wafer index 37), a failure the Random Forest does not
+flag, as a candidate masking case. Feature 31 generates a strong
+pass-direction SHAP contribution ($\phi = -0.05$) despite being
+elevated at 1.947 scaled units, while Features 59 and 103 generate
+weaker failure-direction contributions ($\phi = +0.02$ and $+0.01$
+respectively). In Random Forest, trees that split on Feature 31
+encounter the same suppressing signal, and averaging across 300
+independently trained trees dilutes the weaker failure signals, so
+the averaged prediction falls below the detection threshold.
+Gradient boosting fits each new tree to the negative gradient of
+the loss \cite{chen2016xgboost}, so later trees could in principle
+allocate more capacity to hard samples; however, the audited
+XGBoost model also does not flag this wafer, so this remains a
+hypothesis rather than a finding.
 
 
 Fig.~\ref{fig:waterfall} illustrates the SHAP waterfall for
@@ -670,7 +665,7 @@ within-threshold standard deviation at every condition
 variation than fold-to-fold sampling. The 50\% condition reproduces the Dataset~A baseline of the 
 missingness experiment (0.1910); both analyses used a pipeline 
 separate from that of Table~\ref{tab:cv_results}, so absolute values 
-differ from the 0.2083 reported there, and comparisons should be made 
+differ from the values in Table~\ref{tab:cv_results}, and comparisons should be made
 across thresholds within this analysis. Fig.~\ref{fig:sensitivity} visualizes CV 
 PR-AUC stability across the three threshold conditions, indicating 
 that the reported findings reflect properties of the manufacturing 
@@ -727,11 +722,11 @@ implications for process monitoring system design
 \cite{srisailam2025fault}. Statistical process control systems 
 that examine individual sensors independently cannot detect failure 
 modes where one sensor reading suppresses failure signals from 
-other sensors. The observation that XGBoost recovers this failure 
-where Random Forest does not motivates development of ensemble 
-architectures that explicitly model sensor interactions and correct 
-for masking effects --- consistent with recent directions in 
-multivariate manufacturing intelligence research 
+other sensors. The masking observed in the Random Forest, where averaging over
+trees dilutes weaker failure signals, motivates ensemble
+architectures that explicitly model sensor interactions and
+correct for masking effects, consistent with recent directions in
+multivariate manufacturing intelligence research
 \cite{kim2019fault,hsu2021multiple}.
 
 \section{Conclusion}
