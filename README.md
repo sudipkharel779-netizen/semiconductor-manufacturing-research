@@ -91,7 +91,7 @@ I am an Industrial and Systems Engineering graduate pursuing graduate study in s
 
 ## Background
 
-B.S. Industrial and Systems Engineering, Youngstown State University (ABET-accredited), May 2025. Currently developing research skills independently through a structured ML research project on semiconductor yield prediction, with a second project in progress targeting packaging integration and defect classification. Targeting Fall 2027 MS admission in a semiconductor manufacturing or smart manufacturing program with research assistantship.
+B.S. Industrial and Systems Engineering, Youngstown State University (ABET-accredited), May 2026. Currently developing research skills independently through a structured ML research project on semiconductor yield prediction, with a second project in progress targeting packaging integration and defect classification. Targeting Fall 2027 MS admission in a semiconductor manufacturing or smart manufacturing program with research assistantship.
 
 ---
 
